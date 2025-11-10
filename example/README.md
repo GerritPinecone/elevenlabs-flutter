@@ -1,6 +1,6 @@
-# ElevenLabs Flutter Example
+# ElevenLabs Agents Flutter Example
 
-A comprehensive example application demonstrating the ElevenLabs Flutter SDK features.
+A comprehensive example application demonstrating the ElevenLabs Agents Flutter SDK features.
 
 ## Features Demonstrated
 

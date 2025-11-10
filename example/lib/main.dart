@@ -54,7 +54,7 @@ class ConversationScreen extends StatefulWidget {
 class _ConversationScreenState extends State<ConversationScreen> {
   late ConversationClient _client;
   final _agentIdController = TextEditingController(
-    text: 'agent_4901k7fh5jkrecmbn5zsm7d38z3h', // Default agent ID
+    text: 'your-agent-id',
   );
   final _messageController = TextEditingController();
 

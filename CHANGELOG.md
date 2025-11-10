@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Initial release of ElevenLabs Flutter SDK
+- Initial release of ElevenLabs Agents Flutter SDK
 - Real-time bidirectional audio communication with AI agents via LiveKit
 - Text messaging support (user messages, contextual updates, user activity)
 - Client tools support for agent-invoked device capabilities
@@ -38,6 +38,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - iOS 13.0+
 - Android API 21+
-- Web (experimental)
 
 [0.1.0]: https://github.com/elevenlabs/elevenlabs-flutter/releases/tag/v0.1.0
