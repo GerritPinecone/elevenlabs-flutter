@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:elevenlabs_agents/elevenlabs_agents.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() {
+Future<void> main() async {
+  // Load environment variables
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
 
@@ -54,7 +57,7 @@ class ConversationScreen extends StatefulWidget {
 class _ConversationScreenState extends State<ConversationScreen> {
   late ConversationClient _client;
   final _agentIdController = TextEditingController(
-    text: 'your-agent-id',
+    text: dotenv.env['AGENT_ID'] ?? '',
   );
   final _messageController = TextEditingController();
 
@@ -293,7 +296,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
                 // Speaking Indicator
                 if (isConnected) ...[
                   Container(
-                    padding: const EdgeInsets.all(40),
+                    padding: const EdgeInsets.all(22),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
@@ -305,7 +308,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
                       ),
                     ),
                     child: Container(
-                      padding: const EdgeInsets.all(30),
+                      padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: _client.isSpeaking
@@ -314,12 +317,12 @@ class _ConversationScreenState extends State<ConversationScreen> {
                       ),
                       child: Icon(
                         _client.isSpeaking ? Icons.graphic_eq : Icons.mic,
-                        size: 64,
+                        size: 43,
                         color: _client.isSpeaking ? Colors.white : Colors.grey[700],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   Text(
                     _client.isSpeaking ? 'Agent Speaking...' : 'Listening...',
                     style: TextStyle(
@@ -328,7 +331,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 32),
                 ],
 
                 // Main Action Button

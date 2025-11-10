@@ -17,11 +17,25 @@ A comprehensive example application demonstrating the ElevenLabs Agents Flutter 
 
 ## Setup
 
-### 1. Get an Agent ID
+### 1. Configure Environment Variables
 
+Copy the example environment file and add your agent ID:
+
+```bash
+cd example
+cp .env.example .env
+```
+
+Edit `.env` and add your agent ID:
+
+```
+AGENT_ID=your-actual-agent-id-here
+```
+
+**Get an Agent ID:**
 1. Visit [ElevenLabs](https://elevenlabs.io) and create an account
 2. Create a conversational AI agent in the dashboard
-3. Copy your agent ID
+3. Copy your agent ID and paste it in the `.env` file
 
 ### 2. Configure Permissions
 
@@ -61,10 +75,12 @@ flutter pub get
 flutter run
 ```
 
+The app will automatically load your agent ID from the `.env` file.
+
 ## Usage
 
-1. **Enter Agent ID**: Input your ElevenLabs agent ID
-2. **Start Session**: Tap the "Start" button to connect
+1. **Agent ID**: The agent ID is pre-filled from your `.env` file (you can change it in the app if needed)
+2. **Start Session**: Tap the "Connect" button to start the conversation
 3. **Voice Chat**: Speak naturally with the AI agent
 4. **Text Messages**: Type and send text messages
 5. **Contextual Updates**: Use the note icon to send background context
