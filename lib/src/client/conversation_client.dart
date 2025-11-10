@@ -84,10 +84,6 @@ class ConversationClient extends ChangeNotifier {
   ConversationCallbacks get _enhancedCallbacks {
     final callbacks = _callbacks;
     return ConversationCallbacks(
-      onConnect: ({required String conversationId}) {
-        _conversationId = conversationId;
-        callbacks?.onConnect?.call(conversationId: conversationId);
-      },
       onDisconnect: callbacks?.onDisconnect,
       onStatusChange: callbacks?.onStatusChange,
       onError: callbacks?.onError,
@@ -98,11 +94,9 @@ class ConversationClient extends ChangeNotifier {
       onInterruption: callbacks?.onInterruption,
       onAgentChatResponsePart: callbacks?.onAgentChatResponsePart,
       onConversationMetadata: (metadata) {
-        if (metadata.conversationId != null) {
-          _conversationId = metadata.conversationId;
-          notifyListeners();
-          callbacks?.onConnect?.call(conversationId: metadata.conversationId!);
-        }
+        _conversationId = metadata.conversationId;
+        notifyListeners();
+        callbacks?.onConnect?.call(conversationId: metadata.conversationId);
         callbacks?.onConversationMetadata?.call(metadata);
       },
       onAsrInitiationMetadata: callbacks?.onAsrInitiationMetadata,
@@ -118,6 +112,10 @@ class ConversationClient extends ChangeNotifier {
         endSession();
         callbacks?.onEndCallRequested?.call();
       },
+      onTentativeUserTranscript: callbacks?.onTentativeUserTranscript,
+      onUserTranscript: callbacks?.onUserTranscript,
+      onAgentResponseCorrection: callbacks?.onAgentResponseCorrection,
+      onTentativeAgentResponse: callbacks?.onTentativeAgentResponse,
     );
   }
 
@@ -179,6 +177,7 @@ class ConversationClient extends ChangeNotifier {
         _mode = isSpeaking ? ConversationMode.speaking : ConversationMode.listening;
         _isSpeaking = isSpeaking;
         notifyListeners();
+        _callbacks?.onModeChange?.call(mode: _mode);
         debugPrint('🗣️ Speaking state from LiveKit: $isSpeaking');
       });
 
@@ -295,9 +294,6 @@ class ConversationClient extends ChangeNotifier {
     }
   }
 
-  /// Gets the current conversation ID
-  String? getId() => _conversationId;
-
   void _setStatus(ConversationStatus newStatus) {
     if (_status != newStatus) {
       _status = newStatus;
@@ -375,7 +371,7 @@ class ConversationClient extends ChangeNotifier {
   void dispose() {
     _cleanup();
     _messageHandler.dispose();
-    _liveKitManager.dispose();
+    _liveKitManager.dispose().ignore();
     super.dispose();
   }
 }

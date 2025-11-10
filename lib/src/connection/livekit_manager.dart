@@ -48,8 +48,14 @@ class LiveKitManager {
       // Clean up any existing connection
       await disconnect();
 
+      final roomOptions = RoomOptions(
+        defaultAudioPublishOptions: AudioPublishOptions(
+          audioBitrate: AudioPreset.speech,
+        )
+      );
+
       // Create room
-      _room = Room();
+      _room = Room(roomOptions: roomOptions);
 
       // Set up specific event listeners
       _eventsListener = _room!.createListener();
@@ -139,12 +145,14 @@ class LiveKitManager {
       }
 
       // Enable microphone (LiveKit handles track creation automatically)
-      await _room!.localParticipant?.setMicrophoneEnabled(true);
-      debugPrint('🎤 Microphone enabled');
+      await _room!.localParticipant?.setMicrophoneEnabled(true, audioCaptureOptions: AudioCaptureOptions(
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      ));
 
       // Emit room ready event - connection is fully established and ready for messages
       _roomReadyController.add(null);
-      debugPrint('✅ Room ready for messaging');
 
     } catch (e) {
       debugPrint('❌ LiveKit Connection Error: $e');
@@ -244,12 +252,12 @@ class LiveKitManager {
   }
 
   /// Disposes of all resources
-  void dispose() {
-    _dataStreamController.close();
-    _stateStreamController.close();
-    _roomReadyController.close();
-    _speakingStateController.close();
-    disconnect();
+  Future<void> dispose() async {
+    await _dataStreamController.close();
+    await _stateStreamController.close();
+    await _roomReadyController.close();
+    await _speakingStateController.close();
+    await disconnect();
   }
 }
 

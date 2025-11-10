@@ -94,10 +94,12 @@ class MessageHandler {
           break;
 
         case 'mcp_tool_call':
+          callbacks.onDebug?.call(json);
           _handleMcpToolCall(json);
           break;
 
         case 'mcp_connection_status':
+          callbacks.onDebug?.call(json);
           _handleMcpConnectionStatus(json);
           break;
 
@@ -107,17 +109,41 @@ class MessageHandler {
           break;
 
         case "agent_chat_response_part":
+          callbacks.onDebug?.call(json);
+          _handleAgentChatResponsePart(json);
+          break;
+
         case "internal_tentative_agent_response":
+          callbacks.onDebug?.call(json);
+          _handleTentativeAgentResponse(json);
+          break;
+
         case "vad_score":
+          _handleVadScore(json);
+          break;
+
         case "tentative_user_transcript":
+          callbacks.onDebug?.call(json);
+          _handleTentativeUserTranscript(json);
+          break;
+
         case "user_transcript":
+          callbacks.onDebug?.call(json);
+          _handleUserTranscript(json);
+          break;
+
         case "agent_response_correction":
           callbacks.onDebug?.call(json);
+          _handleAgentResponseCorrection(json);
+          break;
+
+        case "asr_initiation_metadata":
+          callbacks.onDebug?.call(json);
+          _handleAsrInitiationMetadata(json);
           break;
 
         default:
-          debugPrint('Unknown event type: $eventType');
-          callbacks.onDebug?.call(json);
+          callbacks.onDebug?.call('Unknown event type: $eventType - $json');
       }
     } catch (e, stackTrace) {
       debugPrint('Error processing message: $e\n$stackTrace');
@@ -189,8 +215,6 @@ class MessageHandler {
       liveKit.sendMessage({
         'type': 'pong',
         'event_id': eventId,
-      }).catchError((e) {
-        debugPrint('❌ Failed to send pong: $e');
       });
     }
   }
@@ -213,7 +237,6 @@ class MessageHandler {
         callbacks.onUnhandledClientToolCall?.call(toolCall);
       }
     } catch (e) {
-      debugPrint('Error handling client tool call: $e');
       callbacks.onError?.call('Client tool execution failed', e);
     }
   }
@@ -222,48 +245,90 @@ class MessageHandler {
     String toolCallId,
     ClientToolResult result,
   ) async {
-    try {
-      await liveKit.sendMessage({
-        'type': 'client_tool_result',
-        'tool_call_id': toolCallId,
-        'result': result.toJson(),
-      });
-    } catch (e) {
-      debugPrint('Error sending client tool response: $e');
-    }
+
+    await liveKit.sendMessage({
+      'type': 'client_tool_result',
+      'tool_call_id': toolCallId,
+      'result': result.toJson(),
+    });
   }
 
   void _handleMcpToolCall(Map<String, dynamic> json) {
-    try {
-      final toolCall = McpToolCall.fromJson(json);
-      callbacks.onMcpToolCall?.call(toolCall);
-    } catch (e) {
-      debugPrint('Error parsing MCP tool call: $e');
-    }
+    final toolCall = McpToolCall.fromJson(json);
+    callbacks.onMcpToolCall?.call(toolCall);
   }
 
   void _handleMcpConnectionStatus(Map<String, dynamic> json) {
-    try {
-      final status = McpConnectionStatus.fromJson(json);
-      callbacks.onMcpConnectionStatus?.call(status);
-    } catch (e) {
-      debugPrint('Error parsing MCP connection status: $e');
-    }
+    final status = McpConnectionStatus.fromJson(json);
+    callbacks.onMcpConnectionStatus?.call(status);
   }
 
   void _handleAgentToolResponse(Map<String, dynamic> json) {
-    try {
-      final response = AgentToolResponse.fromJson(json);
-      callbacks.onAgentToolResponse?.call(response);
+    final response = AgentToolResponse.fromJson(json);
+    callbacks.onAgentToolResponse?.call(response);
 
-      // If agent calls end_call tool, trigger session end
-      if (json['tool_name'] == 'end_call') {
-        debugPrint('🔚 Agent requested end_call, ending session');
-        callbacks.onEndCallRequested?.call();
-      }
-    } catch (e) {
-      debugPrint('Error parsing agent tool response: $e');
+    // If agent calls end_call tool, trigger session end
+    if (response.toolName == 'end_call') {
+      callbacks.onEndCallRequested?.call();
     }
+  }
+
+  void _handleAgentChatResponsePart(Map<String, dynamic> json) {
+    try {
+      final part = AgentChatResponsePart.fromJson(json);
+      callbacks.onAgentChatResponsePart?.call(part);
+    } catch (e) {
+      debugPrint('Error parsing agent chat response part: $e');
+    }
+  }
+
+  void _handleTentativeAgentResponse(Map<String, dynamic> json) {
+    final event = json['tentative_agent_response_internal_event'] as Map<String, dynamic>?;
+    final response = event?['tentative_agent_response'] as String?;
+    if (response != null) {
+      callbacks.onTentativeAgentResponse?.call(response: response);
+    }
+  }
+
+  void _handleVadScore(Map<String, dynamic> json) {
+    final event = json['vad_score_event'] as Map<String, dynamic>?;
+    final score = event?['vad_score'] as num?;
+    if (score != null) {
+      callbacks.onVadScore?.call(vadScore: score.toDouble());
+    }
+  }
+
+  void _handleTentativeUserTranscript(Map<String, dynamic> json) {
+    final event = json['tentative_user_transcription_event'] as Map<String, dynamic>?;
+    final transcript = event?['user_transcript'] as String?;
+    final eventId = event?['event_id'] as int?;
+    if (transcript != null && eventId != null) {
+      callbacks.onTentativeUserTranscript?.call(
+        transcript: transcript,
+        eventId: eventId,
+      );
+    }
+  }
+
+  void _handleUserTranscript(Map<String, dynamic> json) {
+    final event = json['user_transcription_event'] as Map<String, dynamic>?;
+    final transcript = event?['user_transcript'] as String?;
+    final eventId = event?['event_id'] as int?;
+    if (transcript != null && eventId != null) {
+      callbacks.onUserTranscript?.call(
+        transcript: transcript,
+        eventId: eventId,
+      );
+    }
+  }
+
+  void _handleAgentResponseCorrection(Map<String, dynamic> json) {
+    callbacks.onAgentResponseCorrection?.call(json);
+  }
+
+  void _handleAsrInitiationMetadata(Map<String, dynamic> json) {
+    final metadata = AsrInitiationMetadata.fromJson(json);
+    callbacks.onAsrInitiationMetadata?.call(metadata);
   }
 
   /// Disposes of resources

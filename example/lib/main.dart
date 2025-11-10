@@ -6,6 +6,21 @@ void main() {
   runApp(const MyApp());
 }
 
+/// Simple client tool that logs a message to the console
+class LogMessageTool implements ClientTool {
+  @override
+  Future<ClientToolResult?> execute(Map<String, dynamic> parameters) async {
+    final message = parameters['message'] as String?;
+
+    if (message == null || message.isEmpty) {
+      return ClientToolResult.failure('Missing or empty message parameter');
+    }
+
+    // Log the message to console
+    debugPrint('📢 Agent Tool Call - Log Message: $message');
+  }
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -40,6 +55,8 @@ class _ConversationScreenState extends State<ConversationScreen> {
   );
   final _messageController = TextEditingController();
 
+  void Function()? _clientListener;
+
   @override
   void initState() {
     super.initState();
@@ -63,6 +80,9 @@ class _ConversationScreenState extends State<ConversationScreen> {
 
   void _initializeClient() {
     _client = ConversationClient(
+      clientTools: {
+        'logMessage': LogMessageTool(),
+      },
       callbacks: ConversationCallbacks(
         onConnect: ({required conversationId}) {
           debugPrint('✅ Connected: $conversationId');
@@ -70,7 +90,6 @@ class _ConversationScreenState extends State<ConversationScreen> {
         },
         onDisconnect: (details) {
           debugPrint('❌ Disconnected: ${details.reason}');
-          _showSnackBar('Disconnected: ${details.reason}', Colors.orange);
         },
         onMessage: ({required message, required source}) {
           debugPrint('💬 ${source.name}: $message');
@@ -95,15 +114,35 @@ class _ConversationScreenState extends State<ConversationScreen> {
         onCanSendFeedbackChange: ({required canSendFeedback}) {
           setState(() {});
         },
+        onTentativeUserTranscript: ({required transcript, required eventId}) {
+          debugPrint('🎤 User speaking (live): "$transcript" [#$eventId]');
+        },
+        onUserTranscript: ({required transcript, required eventId}) {
+          debugPrint('✅ User said: "$transcript" [#$eventId]');
+        },
+        onTentativeAgentResponse: ({required response}) {
+          debugPrint('💭 Agent composing: "$response"');
+        },
+        onAgentResponseCorrection: (correction) {
+          debugPrint('🔧 Agent correction: $correction');
+        },
+        onAgentChatResponsePart: (part) {
+          debugPrint('📝 Agent text part [${part.type}]: "${part.text}"');
+        },
         onDebug: (data) {
           debugPrint('🐛 Debug: $data');
+        },
+        onUnhandledClientToolCall: (toolCall) {
+          debugPrint('⚠️ Unhandled tool call: ${toolCall.toolName}');
+          _showSnackBar('Tool not implemented: ${toolCall.toolName}', Colors.orange);
         },
       ),
     );
 
-    _client.addListener(() {
+    _clientListener = () {
       setState(() {});
-    });
+    };
+    _client.addListener(_clientListener!);
   }
 
   void _showSnackBar(String message, Color backgroundColor) {
@@ -119,6 +158,9 @@ class _ConversationScreenState extends State<ConversationScreen> {
 
   @override
   void dispose() {
+    if (_clientListener != null) {
+      _client.removeListener(_clientListener!);
+    }
     _client.dispose();
     _agentIdController.dispose();
     _messageController.dispose();
@@ -335,6 +377,62 @@ class _ConversationScreenState extends State<ConversationScreen> {
                       ),
                     ),
                   ),
+
+                  // Feedback Buttons (only when feedback can be sent)
+                  if (_client.canSendFeedback) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      constraints: const BoxConstraints(maxWidth: 400),
+                      child: Column(
+                        children: [
+                          Text(
+                            'Rate the last response',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () => _client.sendFeedback(isPositive: true),
+                                  icon: const Icon(Icons.thumb_up_outlined, size: 20),
+                                  label: const Text('Good'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.green[700],
+                                    side: BorderSide(color: Colors.green[400]!),
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () => _client.sendFeedback(isPositive: false),
+                                  icon: const Icon(Icons.thumb_down_outlined, size: 20),
+                                  label: const Text('Bad'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.red[700],
+                                    side: BorderSide(color: Colors.red[400]!),
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
 
                   // Message Input Section (only when connected)
                   const SizedBox(height: 32),

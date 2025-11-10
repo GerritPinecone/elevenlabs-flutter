@@ -22,7 +22,7 @@ Map<String, dynamic> constructOverrides(ConversationConfig config) {
     'conversation_config_override': conversationConfigOverride,
     'dynamic_variables': config.dynamicVariables ?? {},
     'source_info': {
-      'source': 'react_native_sdk',
+      'source': 'flutter_sdk',
       'version': overrides?.client?.version ?? packageVersion,
     },
     'type': 'conversation_initiation_client_data',

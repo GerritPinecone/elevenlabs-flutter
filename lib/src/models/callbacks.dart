@@ -61,6 +61,18 @@ class ConversationCallbacks {
   /// Called when the agent requests to end the call (via end_call tool)
   final void Function()? onEndCallRequested;
 
+  /// Called when a tentative user transcript is received (real-time transcription)
+  final void Function({required String transcript, required int eventId})? onTentativeUserTranscript;
+
+  /// Called when a user transcript is finalized
+  final void Function({required String transcript, required int eventId})? onUserTranscript;
+
+  /// Called when an agent response correction is received
+  final void Function(Map<String, dynamic> correction)? onAgentResponseCorrection;
+
+  /// Called when a tentative agent response is received (streaming text)
+  final void Function({required String response})? onTentativeAgentResponse;
+
   const ConversationCallbacks({
     this.onConnect,
     this.onDisconnect,
@@ -81,6 +93,10 @@ class ConversationCallbacks {
     this.onAgentToolResponse,
     this.onDebug,
     this.onEndCallRequested,
+    this.onTentativeUserTranscript,
+    this.onUserTranscript,
+    this.onAgentResponseCorrection,
+    this.onTentativeAgentResponse,
   });
 }
 
