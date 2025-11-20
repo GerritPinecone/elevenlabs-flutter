@@ -47,7 +47,7 @@ class LiveKitManager {
       // Clean up any existing connection
       await disconnect();
 
-      final roomOptions = RoomOptions(
+      const roomOptions = RoomOptions(
         defaultAudioPublishOptions: AudioPublishOptions(
           audioBitrate: AudioPreset.speech,
         ),
@@ -129,7 +129,7 @@ class LiveKitManager {
       // Enable microphone (LiveKit handles track creation automatically)
       await _room!.localParticipant?.setMicrophoneEnabled(
         true,
-        audioCaptureOptions: AudioCaptureOptions(
+        audioCaptureOptions: const AudioCaptureOptions(
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
