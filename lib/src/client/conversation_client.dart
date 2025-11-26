@@ -35,6 +35,7 @@ class ConversationClient extends ChangeNotifier {
 
   StreamSubscription<livekit.ConnectionState>? _stateSubscription;
   StreamSubscription<bool>? _speakingSubscription;
+  StreamSubscription<String>? _disconnectSubscription;
 
   /// Current connection status
   ConversationStatus get status => _status;
@@ -168,11 +169,9 @@ class ConversationClient extends ChangeNotifier {
 
       wsUrl = _websocketUrl ?? 'wss://livekit.rtc.elevenlabs.io';
 
-      // Listen to connection state changes (but don't set connected until after initialization)
-      _stateSubscription = _liveKitManager.stateStream.listen((state) {
-        if (state == livekit.ConnectionState.disconnected) {
-          _handleDisconnection('Connection lost');
-        }
+      // Listen to disconnect events with reasons
+      _disconnectSubscription = _liveKitManager.disconnectStream.listen((reason) {
+        _handleDisconnection(reason);
       });
 
       // Listen to agent speaking state from LiveKit
@@ -222,7 +221,7 @@ class ConversationClient extends ChangeNotifier {
     try {
       _setStatus(ConversationStatus.disconnecting);
       await _cleanup();
-      _handleDisconnection('Session ended by user');
+      _handleDisconnection('user');
     } catch (e) {
       _callbacks?.onError?.call('Error ending session', e);
       _setStatus(ConversationStatus.disconnected);
@@ -352,6 +351,9 @@ class ConversationClient extends ChangeNotifier {
 
     await _speakingSubscription?.cancel();
     _speakingSubscription = null;
+
+    await _disconnectSubscription?.cancel();
+    _disconnectSubscription = null;
 
     _messageHandler.stopListening();
     await _liveKitManager.disconnect();

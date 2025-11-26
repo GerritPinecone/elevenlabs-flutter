@@ -22,6 +22,12 @@ class LiveKitManager {
   /// Stream of connection state changes
   Stream<ConnectionState> get stateStream => _stateStreamController.stream;
 
+  /// Stream controller for disconnect events with reasons
+  final _disconnectStreamController = StreamController<String>.broadcast();
+
+  /// Stream of disconnect events with reasons ('agent', 'user', or 'error')
+  Stream<String> get disconnectStream => _disconnectStreamController.stream;
+
   /// Stream controller for room ready event (connected + local participant published)
   final _roomReadyController = StreamController<void>.broadcast();
 
@@ -65,6 +71,7 @@ class LiveKitManager {
         })
         ..on<RoomDisconnectedEvent>((event) {
           _stateStreamController.add(ConnectionState.disconnected);
+          _disconnectStreamController.add('error');
         })
         ..on<RoomReconnectingEvent>((event) {
           _stateStreamController.add(ConnectionState.reconnecting);
@@ -92,6 +99,7 @@ class LiveKitManager {
           // If the agent disconnects, we should end the session
           if (event.participant.identity.startsWith('agent-')) {
             _stateStreamController.add(ConnectionState.disconnected);
+            _disconnectStreamController.add('agent');
           }
         })
         ..on<AudioPlaybackStatusChanged>((event) async {
@@ -240,6 +248,7 @@ class LiveKitManager {
   Future<void> dispose() async {
     await _dataStreamController.close();
     await _stateStreamController.close();
+    await _disconnectStreamController.close();
     await _roomReadyController.close();
     await _speakingStateController.close();
     await disconnect();
