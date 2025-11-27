@@ -170,7 +170,8 @@ class ConversationClient extends ChangeNotifier {
       wsUrl = _websocketUrl ?? 'wss://livekit.rtc.elevenlabs.io';
 
       // Listen to disconnect events with reasons
-      _disconnectSubscription = _liveKitManager.disconnectStream.listen((reason) {
+      _disconnectSubscription =
+          _liveKitManager.disconnectStream.listen((reason) {
         _handleDisconnection(reason);
       });
 
