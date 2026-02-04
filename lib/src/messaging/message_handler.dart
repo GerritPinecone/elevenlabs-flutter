@@ -234,10 +234,20 @@ class MessageHandler {
     String toolCallId,
     ClientToolResult result,
   ) async {
+    // ElevenLabs expects 'result' as a string and 'is_error' as a top-level bool.
+    final String resultString;
+    if (result.success) {
+      resultString = result.data is String
+          ? result.data as String
+          : result.data?.toString() ?? 'success';
+    } else {
+      resultString = result.error ?? 'Unknown error';
+    }
     await liveKit.sendMessage({
       'type': 'client_tool_result',
       'tool_call_id': toolCallId,
-      'result': result.toJson(),
+      'result': resultString,
+      'is_error': !result.success,
     });
   }
 
